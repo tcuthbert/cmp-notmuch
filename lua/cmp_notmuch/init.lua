@@ -8,6 +8,10 @@ M.new = function()
   return self
 end
 
+M.get_keyword_pattern = function()
+    return [=[^[^:]*\(To\|From\|[CBc]\+\):\s\?\zs\w\+]=]
+end
+
 local pipes = function()
   local stdin = luv.new_pipe(false)
   local stdout = luv.new_pipe(false)
@@ -72,7 +76,9 @@ M.complete = function(self, request, callback)
       stdioe[3]:close()
       handle:close()
       local xs = words
-      callback(result(xs))
+      if vim.regex(self.get_keyword_pattern()) then
+        callback(result(xs))
+      end
     end)
     if handle == nil then
       debug.log(string.format("start `%s` failed: %s", cmd, pid))
