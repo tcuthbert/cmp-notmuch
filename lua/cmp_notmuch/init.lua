@@ -9,14 +9,14 @@ M.new = function()
 end
 
 M.get_keyword_pattern = function()
-    return [=[^[^:]*\(To\|From\|[CBc]\+\):\s\?\zs\w\+]=]
+  return [=[^[^:]*\(To\|From\|[CBc]\+\):\s\?\zs\w\+]=]
 end
 
 local pipes = function()
   local stdin = luv.new_pipe(false)
   local stdout = luv.new_pipe(false)
   local stderr = luv.new_pipe(false)
-  return {stdin, stdout, stderr}
+  return { stdin, stdout, stderr }
 end
 
 local trim = function(str)
@@ -36,9 +36,9 @@ end
 local result = function(words)
   local items = {}
   for _, w in ipairs(words) do
-    table.insert(items, {label=w})
+    table.insert(items, { label = w })
   end
-  return {items=items, isIncomplete=true}
+  return { items = items, isIncomplete = true }
 end
 
 local function map(f, xs)
@@ -51,14 +51,22 @@ end
 
 M.complete = function(self, request, callback)
   local q = string.sub(request.context.cursor_before_line, request.offset)
-  local args = {'address', '--deduplicate=address', q}
+  local args = { 'address', '--deduplicate=address', q }
   do
     if request.option.domains then
       local domains = request.option.domains
       for _, d in ipairs(domains) do
-        d = 'from:'..d
+        d = 'from:' .. d
         table.insert(args, d)
-        end
+      end
+    end
+    if request.option.ignored_senders then
+      local senders = map(
+        function(x)
+          return 'not from:' .. x
+        end, request.option.ignored_senders
+      )
+      args = vim.tbl_extend("keep", args, senders)
     end
   end
   local stdioe = pipes()
